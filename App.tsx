@@ -5,7 +5,7 @@ import {
   Star, Home, StickyNote, MessageCircleHeart, Gavel, HeartHandshake, Siren, 
   LogOut, School, Plus, X, ArrowRight, Sparkles, UserCircle, Lock, Key, ArrowLeft, Loader2,
   Unlock, Users, FileText, Activity, AlertTriangle, CheckCircle, Settings, 
-  Trash2, Edit, BarChart3, Power, PenTool, Wrench, Layers, Save, Eye, PlayCircle
+  Trash2, Edit, BarChart3, Power, PenTool, Wrench, Layers, Save, Eye, PlayCircle, WifiOff
 } from 'lucide-react';
 import { ViewState, MenuItem } from './types';
 import { ChatMode } from './components/ChatMode';
@@ -21,6 +21,9 @@ const App: React.FC = () => {
   const [view, setView] = useState<ViewState>(ViewState.LANDING);
   const [selectedFeature, setSelectedFeature] = useState<string | null>(null);
   
+  // Online/Offline State
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+
   // Login State
   const [loginForm, setLoginForm] = useState({ id: '', password: '' });
   const [loginError, setLoginError] = useState('');
@@ -72,20 +75,39 @@ const App: React.FC = () => {
 
   // Init
   useEffect(() => {
+    // Network listeners
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
     const checkSettings = async () => {
-      const settings = await getSettings();
-      if (settings && settings.maintenanceMode !== undefined) {
-        setMaintenanceMode(settings.maintenanceMode);
+      if (navigator.onLine) {
+        try {
+          const settings = await getSettings();
+          if (settings && settings.maintenanceMode !== undefined) {
+            setMaintenanceMode(settings.maintenanceMode);
+          }
+          // Fetch features
+          const features = await getFeatures();
+          setFeatureSettings(features);
+        } catch (e) {
+          console.log("Offline: Using default settings");
+        }
       }
-      // Fetch features
-      const features = await getFeatures();
-      setFeatureSettings(features);
     };
     checkSettings();
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
   }, []);
 
   // Refresh features helper
   const fetchFeatures = async () => {
+    if (!isOnline) return;
     const features = await getFeatures();
     setFeatureSettings(features);
   };
@@ -122,6 +144,17 @@ const App: React.FC = () => {
   ];
 
   const handleFeatureClick = (item: MenuItem) => {
+    // Check connectivity for specific features
+    const onlineOnlyFeatures = ['chat', '7', 'sos', 'padlet', 'web', '2']; // IDs that strictly need internet
+    if (!isOnline && onlineOnlyFeatures.includes(item.id)) {
+      setFeatureModalContent({
+        title: "Tiada Sambungan Internet",
+        message: "Ciri ini memerlukan sambungan internet untuk berfungsi. Sila semak sambungan anda."
+      });
+      setShowFeatureModal(true);
+      return;
+    }
+
     // Check feature status from DB
     const setting = featureSettings[item.id];
     setActiveGame(null); // Reset active game when switching features
@@ -155,6 +188,12 @@ const App: React.FC = () => {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!isOnline) {
+      setLoginError("Tiada sambungan internet.");
+      return;
+    }
+
     if (!loginForm.id || !loginForm.password) {
       setLoginError("Sila masukkan ID dan Kata Laluan");
       return;
@@ -199,6 +238,10 @@ const App: React.FC = () => {
   };
 
   const handleAdminUnlock = () => {
+    if (!isOnline) {
+      setAdminError('Perlu sambungan internet untuk akses admin.');
+      return;
+    }
     if (adminPin === '21412141') {
       setIsAdminUnlocked(true);
       setAdminError('');
@@ -211,6 +254,7 @@ const App: React.FC = () => {
 
   // --- User Management ---
   const fetchUsersList = async () => {
+    if (!isOnline) return;
     setLoadingUsers(true);
     try {
       const users = await getUsers();
@@ -224,6 +268,7 @@ const App: React.FC = () => {
 
   const handleAddUser = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!isOnline) return;
     const success = await addUser(newUser);
     if (success) {
       setShowAddUser(false);
@@ -233,6 +278,7 @@ const App: React.FC = () => {
   };
 
   const handleDeleteUser = async (docId: string) => {
+    if (!isOnline) return;
     if (window.confirm("Adakah anda pasti mahu memadam pengguna ini?")) {
       await deleteUser(docId);
       fetchUsersList();
@@ -240,6 +286,7 @@ const App: React.FC = () => {
   };
 
   const handleUpdateRole = async (docId: string, newRole: string) => {
+    if (!isOnline) return;
     const success = await updateUserRole(docId, newRole);
     if (success) {
       setUsersList(prev => prev.map(u => u.docId === docId ? {...u, role: newRole} : u));
@@ -248,6 +295,7 @@ const App: React.FC = () => {
 
   // --- Report Management ---
   const fetchReports = async () => {
+    if (!isOnline) return;
     setLoadingReports(true);
     try {
       const reports = await getReports();
@@ -261,6 +309,10 @@ const App: React.FC = () => {
 
   const handleAddReport = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!isOnline) {
+      alert("Perlu internet untuk hantar laporan.");
+      return;
+    }
     const success = await addReport(newReport);
     if (success) {
       setShowAddReport(false);
@@ -270,11 +322,13 @@ const App: React.FC = () => {
   };
 
   const handleUpdateReportStatus = async (docId: string, status: string) => {
+    if (!isOnline) return;
     await updateReport(docId, { status });
     setReportsList(prev => prev.map(r => r.id === docId ? {...r, status} : r));
   };
 
   const handleDeleteReport = async (docId: string) => {
+    if (!isOnline) return;
     if (window.confirm("Padam laporan ini?")) {
       await deleteReport(docId);
       fetchReports();
@@ -314,6 +368,10 @@ const App: React.FC = () => {
   };
 
   const verifyBackendPin = async () => {
+    if (!isOnline) {
+      setBackendPinError("Tiada sambungan internet.");
+      return;
+    }
     if (backendPinInput === '090713040013') {
       if (pendingFeatureUpdate) {
         await updateFeature(pendingFeatureUpdate.id, pendingFeatureUpdate.data);
@@ -338,12 +396,23 @@ const App: React.FC = () => {
   };
 
   const handleToggleMaintenance = async () => {
+    if (!isOnline) return;
     const newState = !maintenanceMode;
     const success = await toggleMaintenanceMode(newState);
     if (success) setMaintenanceMode(newState);
   };
 
   // --- Renderers ---
+
+  const renderOfflineBanner = () => {
+    if (isOnline) return null;
+    return (
+      <div className="fixed bottom-0 left-0 right-0 bg-[#3D405B] text-white py-3 px-4 flex items-center justify-center gap-3 z-[110] animate-fade-in-up shadow-[0_-4px_20px_rgba(0,0,0,0.15)]">
+         <WifiOff size={20} className="text-[#E07A5F]" />
+         <span className="font-bold font-nunito text-sm">Tiada sambungan internet. Mod luar talian diaktifkan.</span>
+      </div>
+    );
+  };
 
   const renderMaintenanceScreen = () => (
     <div className="fixed inset-0 bg-[#3D405B] z-[100] flex flex-col items-center justify-center p-6 text-white text-center">
@@ -501,6 +570,7 @@ const App: React.FC = () => {
                        onChange={(e) => setLoginForm({...loginForm, id: e.target.value})}
                        className="w-full bg-[#Fdfbf7] border-2 border-stone-100 rounded-2xl py-4 pl-12 pr-4 font-bold text-[#3D405B] outline-none focus:border-[#81B29A] focus:bg-white transition-all"
                        placeholder="Nama / ID Pelajar"
+                       disabled={!isOnline}
                      />
                    </div>
                 </div>
@@ -517,6 +587,7 @@ const App: React.FC = () => {
                        onChange={(e) => setLoginForm({...loginForm, password: e.target.value})}
                        className="w-full bg-[#Fdfbf7] border-2 border-stone-100 rounded-2xl py-4 pl-12 pr-4 font-bold text-[#3D405B] outline-none focus:border-[#81B29A] focus:bg-white transition-all"
                        placeholder="••••••••"
+                       disabled={!isOnline}
                      />
                    </div>
                 </div>
@@ -527,9 +598,15 @@ const App: React.FC = () => {
                   </div>
                 )}
 
+                {!isOnline && (
+                   <div className="bg-orange-50 text-orange-600 text-sm font-bold p-3 rounded-xl flex items-center gap-2">
+                     <WifiOff size={16} /> Sambungan internet diperlukan.
+                   </div>
+                )}
+
                 <button 
                   type="submit"
-                  disabled={isLoggingIn}
+                  disabled={isLoggingIn || !isOnline}
                   className="w-full bg-[#81B29A] hover:bg-[#6da388] text-white text-lg font-bold py-4 rounded-2xl shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex items-center justify-center gap-2 disabled:opacity-70"
                 >
                    {isLoggingIn ? <Loader2 className="animate-spin" /> : <Lock size={20} />}
@@ -580,11 +657,13 @@ const App: React.FC = () => {
                         placeholder="Pin Induk"
                         className="w-full bg-[#Fdfbf7] border-2 border-stone-100 rounded-xl py-4 px-4 font-bold text-center text-2xl tracking-widest focus:border-[#E07A5F] outline-none text-[#3D405B]"
                         maxLength={8}
+                        disabled={!isOnline}
                     />
                     {adminError && <p className="text-red-500 text-sm font-bold">{adminError}</p>}
                     <button 
                         onClick={handleAdminUnlock}
-                        className="w-full bg-[#3D405B] text-white font-bold py-4 rounded-xl hover:bg-[#2a2c3f] transition-colors flex items-center justify-center gap-2 shadow-lg"
+                        disabled={!isOnline}
+                        className="w-full bg-[#3D405B] text-white font-bold py-4 rounded-xl hover:bg-[#2a2c3f] transition-colors flex items-center justify-center gap-2 shadow-lg disabled:opacity-70"
                     >
                         <Unlock size={20} /> Buka Akses
                     </button>
@@ -1041,7 +1120,7 @@ const App: React.FC = () => {
         </div>
       )}
 
-      {/* Feature Status Modal (Coming Soon / Maintenance) */}
+      {/* Feature Status Modal (Coming Soon / Maintenance / Offline) */}
       {showFeatureModal && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-[50] p-4 animate-fade-in backdrop-blur-sm">
            <div className="bg-white rounded-[2.5rem] p-8 max-w-sm w-full shadow-2xl text-center relative">
@@ -1064,6 +1143,9 @@ const App: React.FC = () => {
            </div>
         </div>
       )}
+
+      {/* Offline Banner */}
+      {renderOfflineBanner()}
     </div>
   );
 
@@ -1282,6 +1364,9 @@ const App: React.FC = () => {
               })}
             </div>
           </div>
+          
+          {/* Offline Banner (rendered via renderOfflineBanner but double check placement) */}
+          {renderOfflineBanner()}
           
           <div className="mt-12 text-center">
              <p className="text-[#81B29A] font-fredoka text-sm opacity-60">#KITAJAGAKITA • SM SAINS MUZAFFAR SYAH</p>
