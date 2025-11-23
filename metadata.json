@@ -2,6 +2,8 @@
   "name": "KitaBuddy",
   "description": "Your friendly AI learning companion for stories, chat, and discovery.",
   "requestFramePermissions": [
-    "microphone"
+    "microphone",
+    "camera",
+    "clipboard-read"
   ]
 }
