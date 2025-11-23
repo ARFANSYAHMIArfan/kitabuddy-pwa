@@ -1,5 +1,5 @@
 
-const CACHE_NAME = 'kitabuddy-v1';
+const CACHE_NAME = 'kitabuddy-v2';
 
 // CDNs used in the app that should be cached aggressively
 const EXTERNAL_DOMAINS = [
@@ -32,11 +32,11 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
 
   // 1. Ignore API calls (Gemini, Firestore interactions that aren't static scripts)
-  // Firestore usually handles its own persistence, and Gemini needs network.
   if (url.pathname.includes('googleapis.com') && !url.hostname.includes('fonts')) {
     return;
   }
   
+  // Ignore chrome extensions
   if (url.protocol === 'chrome-extension:') {
       return;
   }
@@ -49,7 +49,6 @@ self.addEventListener('fetch', (event) => {
           return response;
         }
         return fetch(event.request).then((networkResponse) => {
-          // Check if valid response
           if (!networkResponse || networkResponse.status !== 200 || networkResponse.type !== 'basic' && networkResponse.type !== 'cors') {
             return networkResponse;
           }
@@ -58,6 +57,9 @@ self.addEventListener('fetch', (event) => {
             cache.put(event.request, responseToCache);
           });
           return networkResponse;
+        }).catch(() => {
+           // If offline and not in cache, nothing we can do for external CDNs usually, 
+           // but the app shell should have loaded them once.
         });
       })
     );
@@ -65,7 +67,7 @@ self.addEventListener('fetch', (event) => {
   }
 
   // 3. Cache Strategy for Local App Files: Network First, Fallback to Cache
-  // This ensures users get the latest code updates when online.
+  // This ensures users get the latest code updates when online, but works offline.
   event.respondWith(
     fetch(event.request)
       .then((response) => {

@@ -143,6 +143,86 @@ const App: React.FC = () => {
     { id: 'sos', title: 'SOS BULI (SPDB)', icon: Siren, color: 'text-red-500 animate-pulse' },
   ];
 
+  // Static content dictionary for offline/standard access
+  const staticContent: Record<string, any> = {
+    '1': {
+      title: "Definisi Buli",
+      content: (
+         <div className="space-y-6">
+           <div className="bg-orange-50 p-6 rounded-3xl border border-orange-100">
+             <h3 className="text-xl font-bold text-[#E07A5F] mb-2">Apa itu Buli?</h3>
+             <p className="text-slate-600 leading-relaxed font-nunito">
+               Buli adalah perbuatan tingkah laku agresif yang berulang, bertujuan untuk menyakiti individu lain secara fizikal, mental, atau emosi.
+             </p>
+           </div>
+           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100">
+                 <h4 className="font-bold text-[#3D405B] mb-2">🦠 Buli Fizikal</h4>
+                 <p className="text-sm text-slate-500 font-nunito">Memukul, menendang, mencuri barang.</p>
+              </div>
+              <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100">
+                 <h4 className="font-bold text-[#3D405B] mb-2">🗣️ Buli Lisan</h4>
+                 <p className="text-sm text-slate-500 font-nunito">Mengejek, menghina, memanggil nama.</p>
+              </div>
+              <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100">
+                 <h4 className="font-bold text-[#3D405B] mb-2">💔 Buli Sosial</h4>
+                 <p className="text-sm text-slate-500 font-nunito">Memulaukan, menyebarkan fitnah.</p>
+              </div>
+              <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100">
+                 <h4 className="font-bold text-[#3D405B] mb-2">💻 Buli Siber</h4>
+                 <p className="text-sm text-slate-500 font-nunito">Gangguan di media sosial, mesej ugutan.</p>
+              </div>
+           </div>
+         </div>
+      )
+    },
+    '3': {
+      title: "Cara Mengelak Buli",
+      content: (
+        <div className="space-y-4">
+          {[
+            { title: "Kekal Tenang", desc: "Jangan tunjukkan rasa takut atau marah. Pembuli suka melihat reaksi anda." },
+            { title: "Abaikan", desc: "Buat tidak tahu dan beredar dari situ dengan yakin." },
+            { title: "Beritahu Seseorang", desc: "Laporkan kepada guru, ibu bapa, atau rakan yang dipercayai." },
+            { title: "Kekal Berkumpulan", desc: "Elakkan berada bersendirian di tempat sunyi." }
+          ].map((item, i) => (
+            <div key={i} className="flex gap-4 bg-white p-5 rounded-2xl border border-slate-100 shadow-sm">
+              <div className="bg-[#81B29A]/10 text-[#81B29A] w-10 h-10 rounded-full flex items-center justify-center font-bold flex-shrink-0">
+                {i + 1}
+              </div>
+              <div>
+                <h4 className="font-bold text-[#3D405B]">{item.title}</h4>
+                <p className="text-slate-500 text-sm font-nunito">{item.desc}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      )
+    },
+    'hukuman': {
+      title: "Hukuman Membuli",
+      content: (
+         <div className="space-y-6">
+            <div className="bg-red-50 p-6 rounded-3xl border border-red-100 text-center">
+               <Gavel size={48} className="text-red-400 mx-auto mb-4" />
+               <h3 className="text-xl font-bold text-red-600 mb-2">Tindakan Disiplin</h3>
+               <p className="text-slate-600 font-nunito">
+                  Buli adalah kesalahan serius di sekolah dan boleh dikenakan tindakan undang-undang.
+               </p>
+            </div>
+            <ul className="space-y-3">
+               {["Amaran Lisan & Bertulis", "Gantung Sekolah", "Buang Sekolah", "Tindakan Undang-Undang (Polis)", "Kaunseling Wajib"].map((item, i) => (
+                 <li key={i} className="flex items-center gap-3 bg-white p-4 rounded-xl border border-stone-100 text-[#3D405B] font-bold">
+                    <div className="w-2 h-2 rounded-full bg-[#E07A5F]" />
+                    {item}
+                 </li>
+               ))}
+            </ul>
+         </div>
+      )
+    }
+  };
+
   const handleFeatureClick = (item: MenuItem) => {
     // Check connectivity for specific features
     const onlineOnlyFeatures = ['chat', '7', 'sos', 'padlet', 'web', '2']; // IDs that strictly need internet
@@ -189,6 +269,8 @@ const App: React.FC = () => {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    // Allow login bypass if offline but no user auth can be verified (Demo/Limited mode)
+    // However, for this app, we restrict login to online for security, but we show the offline error.
     if (!isOnline) {
       setLoginError("Tiada sambungan internet.");
       return;
@@ -1165,7 +1247,7 @@ const App: React.FC = () => {
           </div>
         );
       }
-      if (selectedFeature === '5') { // Permainan (ID: 5) - NOW GAMES ARCADE
+      if (selectedFeature === '5') { // Permainan (ID: 5)
         if (activeGame) {
            return (
             <div className="fixed inset-0 bg-[#Fdfbf7] flex flex-col animate-fade-in z-[100]">
@@ -1249,6 +1331,26 @@ const App: React.FC = () => {
         );
       }
 
+      // Check for static content (Offline-ready features)
+      if (staticContent[selectedFeature]) {
+        const content = staticContent[selectedFeature];
+        return (
+          <div className="min-h-screen bg-[#Fdfbf7] flex flex-col animate-fade-in">
+            <div className="bg-white p-4 shadow-sm border-b border-stone-100 flex items-center gap-4 sticky top-0 z-20">
+               <button onClick={() => setSelectedFeature(null)} className="p-2 hover:bg-stone-100 rounded-full transition-colors text-[#3D405B]">
+                 <ArrowLeft size={24} />
+               </button>
+               <h2 className="text-xl font-bold text-[#3D405B] font-fredoka truncate">
+                 {content.title}
+               </h2>
+            </div>
+            <div className="flex-1 p-6 max-w-3xl mx-auto w-full">
+               {content.content}
+            </div>
+          </div>
+        );
+      }
+
       // Fallback for undeveloped features
       return (
         <div className="min-h-screen bg-[#Fdfbf7] flex flex-col animate-fade-in">
@@ -1257,7 +1359,7 @@ const App: React.FC = () => {
               <ArrowLeft size={24} />
             </button>
             <h2 className="text-xl font-bold text-[#3D405B] font-fredoka truncate">
-               {featureSettings[selectedFeature]?.title || "Feature"}
+               {featureSettings[selectedFeature]?.title || mainMenuItems.find(i => i.id === selectedFeature)?.title || extraMenuItems.find(i => i.id === selectedFeature)?.title || "Feature"}
             </h2>
           </div>
           <div className="flex-1 p-6 flex flex-col items-center justify-center text-center">
