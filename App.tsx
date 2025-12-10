@@ -4,13 +4,14 @@ import {
   BookOpen, Youtube, ShieldAlert, Music, Gamepad2, Image as ImageIcon, 
   Star, Home, StickyNote, MessageCircleHeart, Gavel, HeartHandshake, Siren, 
   LogOut, School, Plus, X, ArrowRight, Sparkles, UserCircle, Lock, Key, ArrowLeft, Loader2,
-  Unlock, Users, FileText, Activity, AlertTriangle, CheckCircle, Settings, 
-  Trash2, Edit, BarChart3, Power, PenTool, Wrench, Layers, Save, Eye
+  Unlock, Users, FileText, Activity, AlertTriangle, Settings, 
+  Trash2, Edit, BarChart3, Wrench, Layers, Save
 } from 'lucide-react';
 import { ViewState, MenuItem } from './types';
-import { ChatMode } from './components/ChatMode';
-import { StoryMode } from './components/StoryMode';
-import { LearnMode } from './components/LearnMode';
+// AI Components removed for non-API deployment
+// import { ChatMode } from './components/ChatMode'; 
+// import { StoryMode } from './components/StoryMode';
+// import { LearnMode } from './components/LearnMode';
 import { 
   loginUser, getUsers, updateUserRole, addUser, deleteUser,
   getReports, addReport, updateReport, deleteReport,
@@ -111,7 +112,7 @@ const App: React.FC = () => {
       title: 'Berbual Bersama Budi', 
       icon: MessageCircleHeart, 
       color: 'text-[#E07A5F]',
-      action: () => setView(ViewState.CHAT) 
+      // action: () => setView(ViewState.CHAT) // AI Feature Disabled
     },
     { id: 'hukuman', title: 'Hukuman Membuli', icon: Gavel, color: 'text-[#3D405B]' },
     { id: 'talian', title: 'Talian Hayat', icon: HeartHandshake, color: 'text-[#E07A5F]' },
@@ -366,7 +367,7 @@ const App: React.FC = () => {
                value={maintenancePinInput}
                onChange={(e) => setMaintenancePinInput(e.target.value)}
                className="w-full bg-slate-100 border-2 border-slate-200 rounded-xl p-4 text-center text-2xl font-bold mb-4 outline-none focus:border-[#E07A5F]"
-               placeholder="PIN (040013)"
+               placeholder="PIN (******)"
                maxLength={6}
              />
              <div className="flex gap-2">
@@ -1063,55 +1064,32 @@ const App: React.FC = () => {
   );
 
   const renderMenu = () => {
-    // Render specific features if selected and active
+    // Note: Render blocks for Chat/Story/Learn removed.
+    // Clicking those features will fall through to default "Coming Soon" or simple list view
+    // if not handled by handleFeatureClick special cases.
+    
+    // Check specific feature rendering if any (currently none since AI is removed)
     if (selectedFeature) {
-      if (selectedFeature === '7') { // Saya Nak Jadi Baik (ID: 7)
+        // Fallback for features that are selected but have no component
         return (
-          <div className="min-h-screen bg-[#Fdfbf7] flex flex-col animate-fade-in">
+            <div className="min-h-screen bg-[#Fdfbf7] flex flex-col animate-fade-in">
             <div className="bg-white p-4 shadow-sm border-b border-stone-100 flex items-center gap-4 sticky top-0 z-20">
-              <button onClick={() => setSelectedFeature(null)} className="p-2 hover:bg-stone-100 rounded-full transition-colors text-[#3D405B]">
+                <button onClick={() => setSelectedFeature(null)} className="p-2 hover:bg-stone-100 rounded-full transition-colors text-[#3D405B]">
                 <ArrowLeft size={24} />
-              </button>
-              <h2 className="text-xl font-bold text-[#3D405B] font-fredoka">Masa Bercerita Ajaib</h2>
+                </button>
+                <h2 className="text-xl font-bold text-[#3D405B] font-fredoka truncate">
+                {featureSettings[selectedFeature]?.title || "Feature"}
+                </h2>
             </div>
-            <StoryMode language="ms" />
-          </div>
+            <div className="flex-1 p-6 flex flex-col items-center justify-center text-center">
+                <div className="w-24 h-24 bg-stone-100 rounded-full flex items-center justify-center mb-6 text-stone-300">
+                <School size={48} />
+                </div>
+                <h3 className="text-xl font-bold text-[#3D405B] mb-2">Kandungan Sedang Dibangunkan</h3>
+                <p className="text-slate-400">Modul ini akan datang tidak lama lagi.</p>
+            </div>
+            </div>
         );
-      }
-      if (selectedFeature === '5') { // Permainan (ID: 5)
-        return (
-          <div className="min-h-screen bg-[#Fdfbf7] flex flex-col animate-fade-in">
-            <div className="bg-white p-4 shadow-sm border-b border-stone-100 flex items-center gap-4 sticky top-0 z-20">
-              <button onClick={() => setSelectedFeature(null)} className="p-2 hover:bg-stone-100 rounded-full transition-colors text-[#3D405B]">
-                <ArrowLeft size={24} />
-              </button>
-              <h2 className="text-xl font-bold text-[#3D405B] font-fredoka">Teroka Dunia</h2>
-            </div>
-            <LearnMode language="ms" />
-          </div>
-        );
-      }
-
-      // Fallback for undeveloped features
-      return (
-        <div className="min-h-screen bg-[#Fdfbf7] flex flex-col animate-fade-in">
-          <div className="bg-white p-4 shadow-sm border-b border-stone-100 flex items-center gap-4 sticky top-0 z-20">
-            <button onClick={() => setSelectedFeature(null)} className="p-2 hover:bg-stone-100 rounded-full transition-colors text-[#3D405B]">
-              <ArrowLeft size={24} />
-            </button>
-            <h2 className="text-xl font-bold text-[#3D405B] font-fredoka truncate">
-               {featureSettings[selectedFeature]?.title || "Feature"}
-            </h2>
-          </div>
-          <div className="flex-1 p-6 flex flex-col items-center justify-center text-center">
-            <div className="w-24 h-24 bg-stone-100 rounded-full flex items-center justify-center mb-6 text-stone-300">
-              <School size={48} />
-            </div>
-            <h3 className="text-xl font-bold text-[#3D405B] mb-2">Kandungan Sedang Dibangunkan</h3>
-            <p className="text-slate-400">Modul ini akan datang tidak lama lagi.</p>
-          </div>
-        </div>
-      );
     }
 
     return (
@@ -1147,8 +1125,6 @@ const App: React.FC = () => {
               {mainMenuItems.map((item) => {
                 const setting = featureSettings[item.id];
                 const title = setting?.title || item.title;
-                // We do NOT hide items here, we show them but handle click events
-                // to show maintenance/coming soon modals
 
                 return (
                   <button
@@ -1223,9 +1199,7 @@ const App: React.FC = () => {
       {view === ViewState.LOGIN && renderLogin()}
       {view === ViewState.MENU && renderMenu()}
       {view === ViewState.ADMIN && renderAdmin()}
-      {view === ViewState.CHAT && (
-         <ChatMode onBack={() => setView(ViewState.MENU)} studentId={loginForm.id} />
-      )}
+      {/* Chat view removed */}
     </>
   );
 };
