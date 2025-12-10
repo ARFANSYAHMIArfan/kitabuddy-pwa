@@ -4,15 +4,8 @@ import { Language, StoryData } from '../types';
 
 const getAI = () => new GoogleGenAI({ apiKey: process.env.API_KEY });
 
-const checkConnection = () => {
-  if (!navigator.onLine) {
-    throw new Error("Tiada sambungan internet. Sila sambungkan ke internet untuk menggunakan ciri AI.");
-  }
-};
-
 // Chat with Budi (Anti-Bullying Companion)
 export const chatWithBuddy = async (history: {role: string, parts: {text: string}[]}[], message: string, language: Language = 'ms') => {
-  checkConnection();
   const ai = getAI();
   
   const systemPrompt = `
@@ -46,7 +39,6 @@ export const chatWithBuddy = async (history: {role: string, parts: {text: string
 };
 
 export const generateStory = async (topic: string, language: Language): Promise<StoryData> => {
-  checkConnection();
   const ai = getAI();
   const prompt = language === 'ms' 
     ? `Tulis cerita kanak-kanak pendek tentang "${topic}". Sertakan tajuk, kandungan cerita, pengajaran (moral), dan prompt visual (dalam Bahasa Inggeris) untuk menjana gambar ilustrasi.`
@@ -75,7 +67,6 @@ export const generateStory = async (topic: string, language: Language): Promise<
 };
 
 export const generateIllustration = async (prompt: string): Promise<string> => {
-  checkConnection();
   const ai = getAI();
   const response = await ai.models.generateImages({
     model: 'imagen-4.0-generate-001',
@@ -93,7 +84,6 @@ export const generateIllustration = async (prompt: string): Promise<string> => {
 };
 
 export const generateSpeech = async (text: string): Promise<string> => {
-  checkConnection();
   const ai = getAI();
   const response = await ai.models.generateContent({
     model: 'gemini-2.5-flash-preview-tts',
@@ -114,7 +104,6 @@ export const generateSpeech = async (text: string): Promise<string> => {
 };
 
 export const analyzeImage = async (base64Data: string, mimeType: string, language: Language): Promise<string> => {
-  checkConnection();
   const ai = getAI();
   const prompt = language === 'ms'
     ? "Lihat gambar ini dan terangkan apa yang anda nampak kepada kanak-kanak. Gunakan bahasa yang mudah dan ceria."
