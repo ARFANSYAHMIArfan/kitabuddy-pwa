@@ -14,7 +14,9 @@ import {
   doc,
   updateDoc,
   deleteDoc,
-  setDoc
+  setDoc,
+  increment,
+  getDoc
 } from 'firebase/firestore';
 import { ChatMessage } from '../types';
 
@@ -226,6 +228,32 @@ export const updateFeature = async (featureId: string, data: any) => {
   } catch (error) {
     console.error("Error updating feature:", error);
     return false;
+  }
+};
+
+// --- Analytics ---
+
+export const incrementFeatureUsage = async (featureId: string) => {
+  try {
+    const docRef = doc(db, 'analytics', 'feature_usage');
+    // Use setDoc with merge to ensure document exists
+    await setDoc(docRef, { [featureId]: increment(1) }, { merge: true });
+  } catch (error) {
+    console.error("Error incrementing feature usage:", error);
+  }
+};
+
+export const getFeatureUsage = async () => {
+  try {
+    const docRef = doc(db, 'analytics', 'feature_usage');
+    const docSnap = await getDoc(docRef);
+    if (docSnap.exists()) {
+      return docSnap.data();
+    }
+    return {};
+  } catch (error) {
+    console.error("Error fetching feature usage:", error);
+    return {};
   }
 };
 

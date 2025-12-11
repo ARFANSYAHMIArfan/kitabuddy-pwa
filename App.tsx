@@ -15,7 +15,8 @@ import { LearnMode } from './components/LearnMode';
 import { 
   loginUser, getUsers, updateUserRole, addUser, deleteUser,
   getReports, addReport, updateReport, deleteReport,
-  getSettings, toggleMaintenanceMode, getFeatures, updateFeature
+  getSettings, toggleMaintenanceMode, getFeatures, updateFeature,
+  incrementFeatureUsage, getFeatureUsage
 } from './services/firebase';
 
 const App: React.FC = () => {
@@ -42,6 +43,7 @@ const App: React.FC = () => {
   const [loadingUsers, setLoadingUsers] = useState(false);
   const [reportsList, setReportsList] = useState<any[]>([]);
   const [loadingReports, setLoadingReports] = useState(false);
+  const [featureStats, setFeatureStats] = useState<Record<string, number>>({});
 
   // Modals
   const [showAddUser, setShowAddUser] = useState(false);
@@ -82,6 +84,17 @@ const App: React.FC = () => {
     checkSettings();
   }, []);
 
+  // Fetch stats when entering dashboard
+  useEffect(() => {
+    if (view === ViewState.ADMIN && adminView === 'dashboard') {
+        const loadStats = async () => {
+             const stats = await getFeatureUsage();
+             setFeatureStats(stats as Record<string, number>);
+        };
+        loadStats();
+    }
+  }, [view, adminView]);
+
   // Refresh features helper
   const fetchFeatures = async () => {
     const features = await getFeatures();
@@ -119,6 +132,9 @@ const App: React.FC = () => {
   ];
 
   const handleFeatureClick = (item: MenuItem) => {
+    // Track usage immediately (live data)
+    incrementFeatureUsage(item.id);
+
     // Check feature status from DB
     const setting = featureSettings[item.id];
     
@@ -657,13 +673,17 @@ const App: React.FC = () => {
                                 </div>
                                 <p className="text-3xl font-black text-[#3D405B]">{usersList.length || 'Loading...'}</p>
                              </div>
+                             
+                             {/* SOS Engagement Card (Replaces Active Reports) */}
                              <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
                                 <div className="flex items-center gap-4 mb-4">
-                                    <div className="p-3 bg-orange-50 text-orange-500 rounded-2xl"><FileText size={24} /></div>
-                                    <span className="font-bold text-slate-400 text-sm uppercase">Active Reports</span>
+                                    <div className="p-3 bg-red-50 text-red-500 rounded-2xl"><Siren size={24} /></div>
+                                    <span className="font-bold text-slate-400 text-sm uppercase">SOS Engagement</span>
                                 </div>
-                                <p className="text-3xl font-black text-[#3D405B]">{reportsList.filter(r => r.status !== 'Selesai').length || 0}</p>
+                                <p className="text-3xl font-black text-[#3D405B]">{featureStats['sos'] || 0}</p>
+                                <p className="text-xs text-slate-400 font-bold mt-2">Total Clicks</p>
                              </div>
+
                              <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
                                 <div className="flex items-center gap-4 mb-4">
                                     <div className="p-3 bg-emerald-50 text-emerald-500 rounded-2xl"><Activity size={24} /></div>
@@ -676,26 +696,40 @@ const App: React.FC = () => {
                           </div>
 
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                              {/* Mock Analytics: Feature Usage */}
+                              {/* Live Analytics: Feature Usage */}
                               <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
-                                  <h4 className="font-bold text-[#3D405B] mb-6 flex items-center gap-2"><BarChart3 size={18}/> Most Chosen Features</h4>
+                                  <h4 className="font-bold text-[#3D405B] mb-6 flex items-center gap-2"><BarChart3 size={18}/> Most Chosen Features (Live)</h4>
                                   <div className="space-y-4">
-                                      {[
-                                          { name: 'Berbual Bersama Budi', val: 85, color: 'bg-[#E07A5F]' },
-                                          { name: 'Video Kesedaran', val: 62, color: 'bg-[#81B29A]' },
-                                          { name: 'Permainan', val: 45, color: 'bg-[#F2CC8F]' },
-                                          { name: 'Definisi Buli', val: 30, color: 'bg-blue-300' }
-                                      ].map((item, idx) => (
-                                          <div key={idx}>
-                                              <div className="flex justify-between text-sm font-bold text-slate-500 mb-1">
-                                                  <span>{item.name}</span>
-                                                  <span>{item.val}%</span>
-                                              </div>
-                                              <div className="w-full bg-slate-100 rounded-full h-3">
-                                                  <div className={`h-3 rounded-full ${item.color}`} style={{width: `${item.val}%`}}></div>
-                                              </div>
-                                          </div>
-                                      ))}
+                                      {Object.entries(featureStats).length > 0 ? (
+                                          Object.entries(featureStats)
+                                          .sort(([,a], [,b]) => (b as number) - (a as number))
+                                          .slice(0, 4)
+                                          .map(([id, count], idx) => {
+                                              const item = [...mainMenuItems, ...extraMenuItems].find(i => i.id === id);
+                                              const title = item?.title || id;
+                                              const total = (Object.values(featureStats) as number[]).reduce((a, b) => a + b, 0);
+                                              const percentage = total > 0 ? Math.round(((count as number) / total) * 100) : 0;
+                                              
+                                              const colors = ['bg-[#E07A5F]', 'bg-[#81B29A]', 'bg-[#F2CC8F]', 'bg-blue-300'];
+                                              const color = colors[idx % colors.length];
+
+                                              return (
+                                                  <div key={id}>
+                                                      <div className="flex justify-between text-sm font-bold text-slate-500 mb-1">
+                                                          <span>{title}</span>
+                                                          <span>{percentage}% ({count})</span>
+                                                      </div>
+                                                      <div className="w-full bg-slate-100 rounded-full h-3">
+                                                          <div className={`h-3 rounded-full ${color}`} style={{width: `${percentage}%`}}></div>
+                                                      </div>
+                                                  </div>
+                                              );
+                                          })
+                                      ) : (
+                                           <div className="text-center py-4 text-slate-400 font-bold text-sm">
+                                               Tiada data penggunaan direkodkan.
+                                           </div>
+                                      )}
                                   </div>
                               </div>
 
