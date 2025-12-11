@@ -8,10 +8,10 @@ import {
   Trash2, Edit, BarChart3, Wrench, Layers, Save
 } from 'lucide-react';
 import { ViewState, MenuItem } from './types';
-// AI Components removed for non-API deployment
-// import { ChatMode } from './components/ChatMode'; 
-// import { StoryMode } from './components/StoryMode';
-// import { LearnMode } from './components/LearnMode';
+// AI Components Enabled for App
+import { ChatMode } from './components/ChatMode'; 
+import { StoryMode } from './components/StoryMode';
+import { LearnMode } from './components/LearnMode';
 import { 
   loginUser, getUsers, updateUserRole, addUser, deleteUser,
   getReports, addReport, updateReport, deleteReport,
@@ -100,8 +100,8 @@ const App: React.FC = () => {
     { id: '3', title: 'Cara Mengelak', icon: ShieldAlert, color: 'text-[#81B29A]' }, // Sage
     { id: '4', title: 'Lagu Anti Buli', icon: Music, color: 'text-[#F2CC8F]' }, // Mustard
     { id: '5', title: 'Permainan', icon: Gamepad2, color: 'text-[#81B29A]' }, // Sage
-    { id: '6', title: 'Koleksi Poster', icon: ImageIcon, color: 'text-[#E07A5F]' },
-    { id: '7', title: 'Saya Nak Jadi Baik', icon: Star, color: 'text-[#F2CC8F]' },
+    { id: '6', title: 'Teroka Dunia (AI)', icon: ImageIcon, color: 'text-[#E07A5F]' }, // Renamed for functionality mapping
+    { id: '7', title: 'Saya Nak Jadi Baik', icon: Star, color: 'text-[#F2CC8F]' }, // Mapped to Story
   ];
 
   const extraMenuItems: MenuItem[] = [
@@ -112,7 +112,6 @@ const App: React.FC = () => {
       title: 'Berbual Bersama Budi', 
       icon: MessageCircleHeart, 
       color: 'text-[#E07A5F]',
-      // action: () => setView(ViewState.CHAT) // AI Feature Disabled
     },
     { id: 'hukuman', title: 'Hukuman Membuli', icon: Gavel, color: 'text-[#3D405B]' },
     { id: 'talian', title: 'Talian Hayat', icon: HeartHandshake, color: 'text-[#E07A5F]' },
@@ -1064,12 +1063,46 @@ const App: React.FC = () => {
   );
 
   const renderMenu = () => {
-    // Note: Render blocks for Chat/Story/Learn removed.
-    // Clicking those features will fall through to default "Coming Soon" or simple list view
-    // if not handled by handleFeatureClick special cases.
-    
-    // Check specific feature rendering if any (currently none since AI is removed)
+    // Feature Rendering Logic
     if (selectedFeature) {
+        
+        // Chat Feature
+        if (selectedFeature === 'chat') {
+             return <ChatMode onBack={() => setSelectedFeature(null)} studentId={loginForm.id || 'guest'} />;
+        }
+        
+        // Story Feature (Mapped to '7')
+        if (selectedFeature === '7') {
+             return (
+               <div className="min-h-screen bg-[#FDFBF7] flex flex-col">
+                  {/* Custom Back Header for Story */}
+                  <div className="bg-white p-4 shadow-sm border-b border-stone-100 flex items-center gap-4 sticky top-0 z-20">
+                     <button onClick={() => setSelectedFeature(null)} className="p-2 hover:bg-stone-100 rounded-full transition-colors text-[#3D405B]">
+                       <ArrowLeft size={24} />
+                     </button>
+                     <h2 className="text-xl font-bold text-[#3D405B] font-fredoka">Magic Story Time</h2>
+                  </div>
+                  <StoryMode language="ms" />
+               </div>
+             );
+        }
+        
+        // Learn Feature (Mapped to '6')
+        if (selectedFeature === '6') {
+             return (
+               <div className="min-h-screen bg-[#FDFBF7] flex flex-col">
+                   {/* Custom Back Header for Learn */}
+                  <div className="bg-white p-4 shadow-sm border-b border-stone-100 flex items-center gap-4 sticky top-0 z-20">
+                     <button onClick={() => setSelectedFeature(null)} className="p-2 hover:bg-stone-100 rounded-full transition-colors text-[#3D405B]">
+                       <ArrowLeft size={24} />
+                     </button>
+                     <h2 className="text-xl font-bold text-[#3D405B] font-fredoka">Teroka Dunia</h2>
+                  </div>
+                  <LearnMode language="ms" />
+               </div>
+             );
+        }
+
         // Fallback for features that are selected but have no component
         return (
             <div className="min-h-screen bg-[#Fdfbf7] flex flex-col animate-fade-in">
