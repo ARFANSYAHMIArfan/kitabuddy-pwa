@@ -1,17 +1,13 @@
 
 import React, { useState, useEffect } from 'react';
 import { 
-  BookOpen, Youtube, ShieldAlert, Music, Gamepad2, Image as ImageIcon, 
+  Youtube, ShieldAlert, Music, Gamepad2, 
   Star, Home, StickyNote, MessageCircleHeart, Gavel, HeartHandshake, Siren, 
   LogOut, School, Plus, X, ArrowRight, Sparkles, UserCircle, Lock, Key, ArrowLeft, Loader2,
   Unlock, Users, FileText, Activity, AlertTriangle, Settings, 
   Trash2, Edit, BarChart3, Wrench, Layers, Save
 } from 'lucide-react';
 import { ViewState, MenuItem } from './types';
-// AI Components Enabled for App
-import { ChatMode } from './components/ChatMode'; 
-import { StoryMode } from './components/StoryMode';
-import { LearnMode } from './components/LearnMode';
 import { 
   loginUser, getUsers, updateUserRole, addUser, deleteUser,
   getReports, addReport, updateReport, deleteReport,
@@ -108,27 +104,79 @@ const App: React.FC = () => {
   // Light (Cream): bg-[#F4F1DE]
 
   const mainMenuItems: MenuItem[] = [
-    { id: '1', title: 'Definisi Buli', icon: BookOpen, color: 'text-[#E07A5F]' }, // Terracotta
-    { id: '2', title: 'Video Kesedaran', icon: Youtube, color: 'text-[#E07A5F]' },
-    { id: '3', title: 'Cara Mengelak', icon: ShieldAlert, color: 'text-[#81B29A]' }, // Sage
-    { id: '4', title: 'Lagu Anti Buli', icon: Music, color: 'text-[#F2CC8F]' }, // Mustard
-    { id: '5', title: 'Permainan', icon: Gamepad2, color: 'text-[#81B29A]' }, // Sage
-    { id: '6', title: 'Teroka Dunia (AI)', icon: ImageIcon, color: 'text-[#E07A5F]' }, // Renamed for functionality mapping
-    { id: '7', title: 'Saya Nak Jadi Baik', icon: Star, color: 'text-[#F2CC8F]' }, // Mapped to Story
+    { 
+      id: '2', 
+      title: 'Video Kesedaran', 
+      icon: Youtube, 
+      color: 'text-[#E07A5F]',
+      action: () => window.open('https://sites.google.com/moe-dl.edu.my/koleksi-video-antibuli/laman-utama', '_blank')
+    },
+    { 
+      id: '4', 
+      title: 'Lagu Anti Buli', 
+      icon: Music, 
+      color: 'text-[#F2CC8F]',
+      action: () => window.open('https://music.youtube.com/playlist?list=PLzh8AM9to4UBCc3fEP0e9jytGMTW1QJ2i&si=niNW6AZVJpErNn-c', '_blank')
+    },
+    { 
+      id: '5', 
+      title: 'Permainan', 
+      icon: Gamepad2, 
+      color: 'text-[#81B29A]',
+      action: () => window.open('https://sites.google.com/moe-dl.edu.my/game-anti-buli-kitabuddy/laman-utama', '_blank')
+    },
+    { 
+      id: '7', 
+      title: 'Saya Nak Jadi Baik', 
+      icon: Star, 
+      color: 'text-[#F2CC8F]',
+      action: () => window.open('https://lnk.bio/kitabuddy', '_blank')
+    },
   ];
 
   const extraMenuItems: MenuItem[] = [
-    { id: 'web', title: 'Laman Web', icon: Home, color: 'text-[#81B29A]' },
-    { id: 'padlet', title: 'Padlet Sharing', icon: StickyNote, color: 'text-[#F2CC8F]' },
+    { 
+      id: 'web', 
+      title: 'Laman Web', 
+      icon: Home, 
+      color: 'text-[#81B29A]',
+      action: () => window.open('https://kitabuddy.my.canva.site/', '_blank')
+    },
+    { 
+      id: 'padlet', 
+      title: 'Padlet Sharing', 
+      icon: StickyNote, 
+      color: 'text-[#F2CC8F]',
+      action: () => window.open('https://padlet.com/arfansyahmimuhammadazmi/apa-yang-anda-pelajari-tzg937penpjgv70i', '_blank')
+    },
     { 
       id: 'chat', 
       title: 'Berbual Bersama Budi', 
       icon: MessageCircleHeart, 
       color: 'text-[#E07A5F]',
+      action: () => window.open('https://character.ai/chat/MTBBbDV5aZMXYA2b8o-K7dOJn5Wxteci7Of68s11ieM', '_blank')
     },
-    { id: 'hukuman', title: 'Hukuman Membuli', icon: Gavel, color: 'text-[#3D405B]' },
-    { id: 'talian', title: 'Talian Hayat', icon: HeartHandshake, color: 'text-[#E07A5F]' },
-    { id: 'sos', title: 'SOS BULI (SPDB)', icon: Siren, color: 'text-red-500 animate-pulse' },
+    { 
+      id: 'hukuman', 
+      title: 'Hukuman Membuli', 
+      icon: Gavel, 
+      color: 'text-[#3D405B]',
+      action: () => window.open('https://sites.google.com/moe-dl.edu.my/kitabuddy-hukuman-sang-pembuli/laman-utama', '_blank')
+    },
+    { 
+      id: 'talian', 
+      title: 'Talian Hayat', 
+      icon: HeartHandshake, 
+      color: 'text-[#E07A5F]',
+      action: () => window.open('https://linktr.ee/emaslahat', '_blank')
+    },
+    { 
+      id: 'sos', 
+      title: 'SOS BULI (SPDB)', 
+      icon: Siren, 
+      color: 'text-red-500 animate-pulse',
+      action: () => window.open('https://s-a-f-e-smart-reporting.onrender.com', '_blank')
+    },
   ];
 
   const handleFeatureClick = (item: MenuItem) => {
@@ -1097,47 +1145,8 @@ const App: React.FC = () => {
   );
 
   const renderMenu = () => {
-    // Feature Rendering Logic
+    // Note: Since all features are now external links, selectedFeature logic is only fallback or admin
     if (selectedFeature) {
-        
-        // Chat Feature
-        if (selectedFeature === 'chat') {
-             return <ChatMode onBack={() => setSelectedFeature(null)} studentId={loginForm.id || 'guest'} />;
-        }
-        
-        // Story Feature (Mapped to '7')
-        if (selectedFeature === '7') {
-             return (
-               <div className="min-h-screen bg-[#FDFBF7] flex flex-col">
-                  {/* Custom Back Header for Story */}
-                  <div className="bg-white p-4 shadow-sm border-b border-stone-100 flex items-center gap-4 sticky top-0 z-20">
-                     <button onClick={() => setSelectedFeature(null)} className="p-2 hover:bg-stone-100 rounded-full transition-colors text-[#3D405B]">
-                       <ArrowLeft size={24} />
-                     </button>
-                     <h2 className="text-xl font-bold text-[#3D405B] font-fredoka">Magic Story Time</h2>
-                  </div>
-                  <StoryMode language="ms" />
-               </div>
-             );
-        }
-        
-        // Learn Feature (Mapped to '6')
-        if (selectedFeature === '6') {
-             return (
-               <div className="min-h-screen bg-[#FDFBF7] flex flex-col">
-                   {/* Custom Back Header for Learn */}
-                  <div className="bg-white p-4 shadow-sm border-b border-stone-100 flex items-center gap-4 sticky top-0 z-20">
-                     <button onClick={() => setSelectedFeature(null)} className="p-2 hover:bg-stone-100 rounded-full transition-colors text-[#3D405B]">
-                       <ArrowLeft size={24} />
-                     </button>
-                     <h2 className="text-xl font-bold text-[#3D405B] font-fredoka">Teroka Dunia</h2>
-                  </div>
-                  <LearnMode language="ms" />
-               </div>
-             );
-        }
-
-        // Fallback for features that are selected but have no component
         return (
             <div className="min-h-screen bg-[#Fdfbf7] flex flex-col animate-fade-in">
             <div className="bg-white p-4 shadow-sm border-b border-stone-100 flex items-center gap-4 sticky top-0 z-20">
@@ -1266,7 +1275,6 @@ const App: React.FC = () => {
       {view === ViewState.LOGIN && renderLogin()}
       {view === ViewState.MENU && renderMenu()}
       {view === ViewState.ADMIN && renderAdmin()}
-      {/* Chat view removed */}
     </>
   );
 };
