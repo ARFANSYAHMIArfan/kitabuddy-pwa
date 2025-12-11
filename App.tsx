@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { 
-  Youtube, ShieldAlert, Music, Gamepad2, 
+  Youtube, ShieldAlert, Music, Gamepad2, BookOpen,
   Star, Home, StickyNote, MessageCircleHeart, Gavel, HeartHandshake, Siren, 
   LogOut, School, Plus, X, ArrowRight, Sparkles, UserCircle, Lock, Key, ArrowLeft, Loader2,
   Unlock, Users, FileText, Activity, AlertTriangle, Settings, 
@@ -14,6 +14,8 @@ import {
   getSettings, toggleMaintenanceMode, getFeatures, updateFeature,
   incrementFeatureUsage, getFeatureUsage
 } from './services/firebase';
+import { DefinisiBuli } from './components/DefinisiBuli';
+import { CaraMengelak } from './components/CaraMengelak';
 
 const App: React.FC = () => {
   const [view, setView] = useState<ViewState>(ViewState.LANDING);
@@ -105,11 +107,25 @@ const App: React.FC = () => {
 
   const mainMenuItems: MenuItem[] = [
     { 
+      id: '1', 
+      title: 'Definisi Buli', 
+      icon: BookOpen, 
+      color: 'text-[#E07A5F]',
+      // Use internal component
+    },
+    { 
       id: '2', 
       title: 'Video Kesedaran', 
       icon: Youtube, 
       color: 'text-[#E07A5F]',
       action: () => window.open('https://sites.google.com/moe-dl.edu.my/koleksi-video-antibuli/laman-utama', '_blank')
+    },
+    { 
+      id: '3', 
+      title: 'Cara Mengelak', 
+      icon: ShieldAlert, 
+      color: 'text-[#81B29A]',
+      // Use internal component
     },
     { 
       id: '4', 
@@ -1145,7 +1161,15 @@ const App: React.FC = () => {
   );
 
   const renderMenu = () => {
-    // Note: Since all features are now external links, selectedFeature logic is only fallback or admin
+    // Feature Routing
+    if (selectedFeature === '1') {
+      return <DefinisiBuli onBack={() => setSelectedFeature(null)} />;
+    }
+    if (selectedFeature === '3') {
+      return <CaraMengelak onBack={() => setSelectedFeature(null)} />;
+    }
+
+    // Fallback for other features (e.g. placeholders or admin testing)
     if (selectedFeature) {
         return (
             <div className="min-h-screen bg-[#Fdfbf7] flex flex-col animate-fade-in">
