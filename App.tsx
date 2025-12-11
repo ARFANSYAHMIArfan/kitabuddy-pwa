@@ -1,11 +1,10 @@
-
 import React, { useState, useEffect } from 'react';
 import { 
   Youtube, ShieldAlert, Music, Gamepad2, BookOpen,
   Star, Home, StickyNote, MessageCircleHeart, Gavel, HeartHandshake, Siren, 
   LogOut, School, Plus, X, ArrowRight, Sparkles, UserCircle, Lock, Key, ArrowLeft, Loader2,
   Unlock, Users, FileText, Activity, AlertTriangle, Settings, 
-  Trash2, Edit, BarChart3, Wrench, Layers, Save, WifiOff
+  Trash2, Edit, BarChart3, Wrench, Layers, Save, WifiOff, Camera, Info
 } from 'lucide-react';
 import { ViewState, MenuItem } from './types';
 import { 
@@ -16,6 +15,9 @@ import {
 } from './services/firebase';
 import { DefinisiBuli } from './components/DefinisiBuli';
 import { CaraMengelak } from './components/CaraMengelak';
+import { StoryMode } from './components/StoryMode';
+import { ChatMode } from './components/ChatMode';
+import { LearnMode } from './components/LearnMode';
 
 const App: React.FC = () => {
   const [view, setView] = useState<ViewState>(ViewState.LANDING);
@@ -124,19 +126,24 @@ const App: React.FC = () => {
     setFeatureSettings(features);
   };
 
-  // Palette:
-  // Primary (Sage): text-[#81B29A]
-  // Secondary (Terracotta): text-[#E07A5F]
-  // Dark (Charcoal): text-[#3D405B]
-  // Light (Cream): bg-[#F4F1DE]
-
   const mainMenuItems: MenuItem[] = [
+    { 
+      id: 'story', 
+      title: 'Cerita Ajaib', 
+      icon: BookOpen, 
+      color: 'text-purple-500'
+    },
+    { 
+      id: 'learn', 
+      title: 'Teroka Dunia', 
+      icon: Camera, 
+      color: 'text-emerald-500'
+    },
     { 
       id: '1', 
       title: 'Definisi Buli', 
-      icon: BookOpen, 
+      icon: Info, 
       color: 'text-[#E07A5F]',
-      // Use internal component
     },
     { 
       id: '2', 
@@ -150,7 +157,6 @@ const App: React.FC = () => {
       title: 'Cara Mengelak', 
       icon: ShieldAlert, 
       color: 'text-[#81B29A]',
-      // Use internal component
     },
     { 
       id: '4', 
@@ -195,7 +201,7 @@ const App: React.FC = () => {
       title: 'Berbual Bersama Budi', 
       icon: MessageCircleHeart, 
       color: 'text-[#E07A5F]',
-      action: () => window.open('https://character.ai/chat/MTBBbDV5aZMXYA2b8o-K7dOJn5Wxteci7Of68s11ieM', '_blank')
+      // internal navigation
     },
     { 
       id: 'hukuman', 
@@ -222,7 +228,7 @@ const App: React.FC = () => {
 
   const handleFeatureClick = (item: MenuItem) => {
     // If external action and offline, warn user
-    if (!isOnline && item.action && !['1', '3'].includes(item.id)) { // 1 & 3 are internal
+    if (!isOnline && item.action && !['1', '3', 'story', 'learn', 'chat'].includes(item.id)) {
         alert("Anda sedang berada dalam mod luar talian. Ciri ini memerlukan sambungan internet.");
         return;
     }
@@ -258,7 +264,12 @@ const App: React.FC = () => {
     if (item.action) {
       item.action();
     } else {
-      setSelectedFeature(item.id);
+      if (item.id === 'chat') {
+        setView(ViewState.CHAT);
+      } else {
+        setSelectedFeature(item.id);
+        setView(ViewState.PLACEHOLDER);
+      }
     }
   };
 
@@ -304,6 +315,7 @@ const App: React.FC = () => {
     setIsAdminUnlocked(false);
     setMaintenanceBypass(false); 
     setView(ViewState.LANDING);
+    setSelectedFeature(null);
   };
 
   const handleAdminUnlock = () => {
@@ -1048,6 +1060,103 @@ const App: React.FC = () => {
             </div>
         )}
       </div>
+    </div>
+  );
+
+  const renderMenu = () => (
+    <div className="min-h-screen bg-[#FDFBF7] p-6 pb-24 animate-fade-in">
+       {/* Header */}
+       <div className="flex justify-between items-center mb-8">
+          <div>
+             <h2 className="text-2xl font-black text-[#3D405B] font-fredoka">Hai, {userName || 'Kawan'}! 👋</h2>
+             <p className="text-slate-500 font-nunito">Apa kita nak buat hari ini?</p>
+          </div>
+          <div className="flex gap-2">
+            {userRole.toLowerCase().includes('admin') && (
+                <button onClick={() => setView(ViewState.ADMIN)} className="p-3 bg-slate-200 text-[#3D405B] rounded-full">
+                    <Settings size={24} />
+                </button>
+            )}
+            <button onClick={handleLogout} className="p-3 bg-red-100 text-red-500 rounded-full">
+                <LogOut size={24} />
+            </button>
+          </div>
+       </div>
+
+       {/* Main Grid */}
+       <div className="grid grid-cols-2 gap-4 mb-8">
+          {mainMenuItems.map(item => (
+             <div 
+               key={item.id}
+               onClick={() => handleFeatureClick(item)}
+               className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex flex-col items-center text-center gap-3 active:scale-95 transition-transform"
+             >
+                <div className={`w-14 h-14 rounded-2xl bg-slate-50 ${item.color} flex items-center justify-center`}>
+                    <item.icon size={32} />
+                </div>
+                <span className="font-bold text-[#3D405B] text-sm leading-tight">{item.title}</span>
+             </div>
+          ))}
+       </div>
+
+       <h3 className="font-bold text-[#3D405B] mb-4 flex items-center gap-2">
+         <Sparkles size={18} className="text-[#E07A5F]" /> Lebih Banyak
+       </h3>
+       
+       <div className="space-y-3">
+          {extraMenuItems.map(item => (
+             <div 
+               key={item.id}
+               onClick={() => handleFeatureClick(item)}
+               className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-4 active:scale-95 transition-transform"
+             >
+                <div className={`p-3 rounded-xl bg-slate-50 ${item.color}`}>
+                   <item.icon size={24} />
+                </div>
+                <span className="font-bold text-[#3D405B] flex-1">{item.title}</span>
+                <ArrowRight size={18} className="text-slate-300" />
+             </div>
+          ))}
+       </div>
+    </div>
+  );
+
+  return (
+    <>
+      {maintenanceMode && !maintenanceBypass && !userRole.toLowerCase().includes('admin') ? (
+         renderMaintenanceScreen()
+      ) : (
+         <>
+            {view === ViewState.LANDING && renderLanding()}
+            {view === ViewState.LOGIN && renderLogin()}
+            {view === ViewState.ADMIN && renderAdmin()}
+            {view === ViewState.MENU && renderMenu()}
+            {view === ViewState.CHAT && <ChatMode onBack={() => setView(ViewState.MENU)} studentId={loginForm.id || 'guest'} />}
+            
+            {view === ViewState.PLACEHOLDER && (
+               <div className="min-h-screen bg-[#FDFBF7]">
+                  {selectedFeature === '1' && <DefinisiBuli onBack={() => setView(ViewState.MENU)} />}
+                  {selectedFeature === '3' && <CaraMengelak onBack={() => setView(ViewState.MENU)} />}
+                  {selectedFeature === 'story' && (
+                      <div className="relative">
+                          <button onClick={() => setView(ViewState.MENU)} className="absolute top-4 left-4 z-10 p-2 bg-white/50 backdrop-blur rounded-full">
+                              <ArrowLeft size={24} />
+                          </button>
+                          <StoryMode language="ms" />
+                      </div>
+                  )}
+                  {selectedFeature === 'learn' && (
+                       <div className="relative">
+                          <button onClick={() => setView(ViewState.MENU)} className="absolute top-4 left-4 z-10 p-2 bg-white/50 backdrop-blur rounded-full">
+                              <ArrowLeft size={24} />
+                          </button>
+                          <LearnMode language="ms" />
+                       </div>
+                  )}
+               </div>
+            )}
+         </>
+      )}
 
       {/* Add User Modal */}
       {showAddUser && (
