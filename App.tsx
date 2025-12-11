@@ -5,7 +5,7 @@ import {
   Star, Home, StickyNote, MessageCircleHeart, Gavel, HeartHandshake, Siren, 
   LogOut, School, Plus, X, ArrowRight, Sparkles, UserCircle, Lock, Key, ArrowLeft, Loader2,
   Unlock, Users, FileText, Activity, AlertTriangle, Settings, 
-  Trash2, Edit, BarChart3, Wrench, Layers, Save
+  Trash2, Edit, BarChart3, Wrench, Layers, Save, WifiOff
 } from 'lucide-react';
 import { ViewState, MenuItem } from './types';
 import { 
@@ -21,6 +21,9 @@ const App: React.FC = () => {
   const [view, setView] = useState<ViewState>(ViewState.LANDING);
   const [selectedFeature, setSelectedFeature] = useState<string | null>(null);
   
+  // Connectivity State
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+
   // Login State
   const [loginForm, setLoginForm] = useState({ id: '', password: '' });
   const [loginError, setLoginError] = useState('');
@@ -71,30 +74,52 @@ const App: React.FC = () => {
   // Init
   useEffect(() => {
     const checkSettings = async () => {
-      const settings = await getSettings();
-      if (settings && settings.maintenanceMode !== undefined) {
-        setMaintenanceMode(settings.maintenanceMode);
+      // Only fetch if online to avoid immediate errors, though Firestore handles offline gracefully
+      if (isOnline) {
+        try {
+          const settings = await getSettings();
+          if (settings && settings.maintenanceMode !== undefined) {
+            setMaintenanceMode(settings.maintenanceMode);
+          }
+          // Fetch features
+          const features = await getFeatures();
+          setFeatureSettings(features);
+        } catch (e) {
+          console.log("Offline or error fetching settings");
+        }
       }
-      // Fetch features
-      const features = await getFeatures();
-      setFeatureSettings(features);
     };
     checkSettings();
+  }, [isOnline]);
+
+  // Connectivity Listeners
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
   }, []);
 
   // Fetch stats when entering dashboard
   useEffect(() => {
-    if (view === ViewState.ADMIN && adminView === 'dashboard') {
+    if (view === ViewState.ADMIN && adminView === 'dashboard' && isOnline) {
         const loadStats = async () => {
              const stats = await getFeatureUsage();
              setFeatureStats(stats as Record<string, number>);
         };
         loadStats();
     }
-  }, [view, adminView]);
+  }, [view, adminView, isOnline]);
 
   // Refresh features helper
   const fetchFeatures = async () => {
+    if (!isOnline) return;
     const features = await getFeatures();
     setFeatureSettings(features);
   };
@@ -196,8 +221,16 @@ const App: React.FC = () => {
   ];
 
   const handleFeatureClick = (item: MenuItem) => {
-    // Track usage immediately (live data)
-    incrementFeatureUsage(item.id);
+    // If external action and offline, warn user
+    if (!isOnline && item.action && !['1', '3'].includes(item.id)) { // 1 & 3 are internal
+        alert("Anda sedang berada dalam mod luar talian. Ciri ini memerlukan sambungan internet.");
+        return;
+    }
+
+    // Track usage immediately (live data) if online
+    if (isOnline) {
+        incrementFeatureUsage(item.id);
+    }
 
     // Check feature status from DB
     const setting = featureSettings[item.id];
@@ -286,6 +319,7 @@ const App: React.FC = () => {
 
   // --- User Management ---
   const fetchUsersList = async () => {
+    if (!isOnline) return;
     setLoadingUsers(true);
     try {
       const users = await getUsers();
@@ -323,6 +357,7 @@ const App: React.FC = () => {
 
   // --- Report Management ---
   const fetchReports = async () => {
+    if (!isOnline) return;
     setLoadingReports(true);
     try {
       const reports = await getReports();
@@ -1157,148 +1192,14 @@ const App: React.FC = () => {
            </div>
         </div>
       )}
-    </div>
-  );
 
-  const renderMenu = () => {
-    // Feature Routing
-    if (selectedFeature === '1') {
-      return <DefinisiBuli onBack={() => setSelectedFeature(null)} />;
-    }
-    if (selectedFeature === '3') {
-      return <CaraMengelak onBack={() => setSelectedFeature(null)} />;
-    }
-
-    // Fallback for other features (e.g. placeholders or admin testing)
-    if (selectedFeature) {
-        return (
-            <div className="min-h-screen bg-[#Fdfbf7] flex flex-col animate-fade-in">
-            <div className="bg-white p-4 shadow-sm border-b border-stone-100 flex items-center gap-4 sticky top-0 z-20">
-                <button onClick={() => setSelectedFeature(null)} className="p-2 hover:bg-stone-100 rounded-full transition-colors text-[#3D405B]">
-                <ArrowLeft size={24} />
-                </button>
-                <h2 className="text-xl font-bold text-[#3D405B] font-fredoka truncate">
-                {featureSettings[selectedFeature]?.title || "Feature"}
-                </h2>
-            </div>
-            <div className="flex-1 p-6 flex flex-col items-center justify-center text-center">
-                <div className="w-24 h-24 bg-stone-100 rounded-full flex items-center justify-center mb-6 text-stone-300">
-                <School size={48} />
-                </div>
-                <h3 className="text-xl font-bold text-[#3D405B] mb-2">Kandungan Sedang Dibangunkan</h3>
-                <p className="text-slate-400">Modul ini akan datang tidak lama lagi.</p>
-            </div>
-            </div>
-        );
-    }
-
-    return (
-      <div className="min-h-screen bg-aesthetic-pattern p-6 pb-24 md:p-10 animate-fade-in">
-        <div className="max-w-5xl mx-auto">
-          <div className="flex justify-between items-center mb-8 bg-white/80 backdrop-blur-sm p-4 rounded-3xl shadow-sm border border-white/50">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-[#E07A5F] text-white rounded-full flex items-center justify-center font-bold text-xl shadow-md">
-                {(userName || loginForm.id).charAt(0).toUpperCase()}
-              </div>
-              <div>
-                <h2 className="text-xl font-black text-[#3D405B] font-fredoka leading-none">
-                  Hai, {userName ? userName.split(' ')[0] : loginForm.id}!
-                </h2>
-                <p className="text-xs font-bold text-[#81B29A] uppercase tracking-wider mt-1">Pelajar Hebat</p>
-              </div>
-            </div>
-            <div className="flex gap-2">
-              {userRole && userRole.toLowerCase().includes('admin') && (
-                <button onClick={() => setView(ViewState.ADMIN)} className="bg-[#3D405B] text-white p-3 rounded-full shadow-lg hover:scale-105 transition-transform">
-                  <Settings size={20} />
-                </button>
-              )}
-              <button onClick={handleLogout} className="bg-red-50 text-red-500 p-3 rounded-full shadow-sm hover:bg-red-100 transition-colors">
-                <LogOut size={20} />
-              </button>
-            </div>
-          </div>
-
-          <div className="mb-10">
-            <h3 className="text-lg font-black text-[#3D405B] font-fredoka mb-4 px-2">Aktiviti Utama</h3>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {mainMenuItems.map((item) => {
-                const setting = featureSettings[item.id];
-                const title = setting?.title || item.title;
-
-                return (
-                  <button
-                    key={item.id}
-                    onClick={() => handleFeatureClick(item)}
-                    className="group bg-white p-6 rounded-[2rem] shadow-sm border border-stone-100 flex flex-col items-center text-center gap-4 hover:shadow-xl hover:-translate-y-2 transition-all duration-300 relative overflow-hidden"
-                  >
-                    <div className={`w-16 h-16 rounded-2xl bg-[#Fdfbf7] flex items-center justify-center ${item.color} group-hover:scale-110 transition-transform shadow-inner`}>
-                      <item.icon size={32} />
-                    </div>
-                    <span className="font-bold text-[#3D405B] text-sm md:text-base leading-tight px-2">{title}</span>
-                    
-                    {/* Status Badge if not Active */}
-                    {setting && setting.status !== 'Active' && (
-                       <div className="absolute top-2 right-2">
-                          {setting.status === 'Coming Soon' && <div className="bg-yellow-100 text-yellow-600 p-1 rounded-full"><Sparkles size={12} /></div>}
-                          {setting.status === 'Maintenance' && <div className="bg-red-100 text-red-600 p-1 rounded-full"><Wrench size={12} /></div>}
-                       </div>
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          <div>
-            <h3 className="text-lg font-black text-[#3D405B] font-fredoka mb-4 px-2">Pautan Pantas</h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {extraMenuItems.map((item) => {
-                const setting = featureSettings[item.id];
-                const title = setting?.title || item.title;
-
-                return (
-                  <button
-                    key={item.id}
-                    onClick={() => handleFeatureClick(item)}
-                    className={`bg-white p-5 rounded-2xl shadow-sm border border-stone-100 flex items-center gap-4 hover:shadow-md transition-all text-left group ${item.id === 'sos' ? 'bg-red-50 border-red-100' : ''}`}
-                  >
-                    <div className={`p-3 rounded-xl ${item.id === 'sos' ? 'bg-white text-red-500 shadow-sm' : 'bg-stone-50 ' + item.color} group-hover:scale-110 transition-transform`}>
-                      <item.icon size={20} />
-                    </div>
-                    <span className={`font-bold text-sm flex-1 ${item.id === 'sos' ? 'text-red-600' : 'text-[#3D405B]'}`}>{title}</span>
-                    
-                    {/* Status Icon */}
-                    {setting && setting.status !== 'Active' && (
-                         <span className="text-xs font-bold px-2 py-1 bg-slate-100 rounded-md text-slate-500 whitespace-nowrap">
-                           {setting.status}
-                         </span>
-                    )}
-
-                    {item.id !== 'sos' && (!setting || setting.status === 'Active') && (
-                       <ArrowRight size={16} className="text-stone-300 group-hover:text-[#E07A5F] transition-colors" />
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-          
-          <div className="mt-12 text-center">
-             <p className="text-[#81B29A] font-fredoka text-sm opacity-60">#KITAJAGAKITA • SM SAINS MUZAFFAR SYAH</p>
-          </div>
+      {/* Offline Banner */}
+      {!isOnline && (
+        <div className="fixed top-0 left-0 right-0 bg-[#3D405B] text-white py-2 px-4 text-center z-[110] animate-slide-down flex items-center justify-center gap-2 shadow-md">
+           <WifiOff size={16} className="text-[#E07A5F]" />
+           <span className="text-xs font-bold tracking-wide">Mod Luar Talian: Sambungan internet terputus. Sesetengah ciri mungkin tidak berfungsi.</span>
         </div>
-      </div>
-    );
-  };
-
-  return (
-    <>
-      {maintenanceMode && !maintenanceBypass && view !== ViewState.ADMIN && renderMaintenanceScreen()}
-      {view === ViewState.LANDING && renderLanding()}
-      {view === ViewState.LOGIN && renderLogin()}
-      {view === ViewState.MENU && renderMenu()}
-      {view === ViewState.ADMIN && renderAdmin()}
+      )}
     </>
   );
 };
