@@ -30,14 +30,14 @@ import { ChatMessage } from '../types';
 
 // Firebase Configuration for safe-aistd
 const firebaseConfig = {
-  apiKey: "AIzaSyCXbiq5oyy9zQmCLoodUOjSMLL9OFKNB0g",
-  authDomain: "safe-aistd.firebaseapp.com",
-  databaseURL: "https://safe-aistd-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "safe-aistd",
-  storageBucket: "safe-aistd.firebasestorage.app",
-  messagingSenderId: "222835619714",
-  appId: "1:222835619714:web:54f183ce46fb428117819b",
-  measurementId: "G-NVSPG9R63N"
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "AIzaSyCXbiq5oyy9zQmCLoodUOjSMLL9OFKNB0g",
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "safe-aistd.firebaseapp.com",
+  databaseURL: import.meta.env.VITE_FIREBASE_DATABASE_URL || "https://safe-aistd-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "safe-aistd",
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "safe-aistd.firebasestorage.app",
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "222835619714",
+  appId: import.meta.env.VITE_FIREBASE_APP_ID || "1:222835619714:web:54f183ce46fb428117819b",
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID || "G-NVSPG9R63N"
 };
 
 const app = initializeApp(firebaseConfig);
@@ -160,7 +160,7 @@ export const loginUser = async (studentId: string, password: string) => {
   } catch (error) {
     console.error("Error logging in:", error);
     // Fallback for demo purposes if DB isn't set up yet or permission issues occur
-    if (process.env.NODE_ENV === 'development') {
+    if (import.meta.env.DEV || import.meta.env.MODE === 'development') {
         console.warn("Firebase login failed, allowing access for development/demo.");
         
         // Mock Admin role for testing if ID contains 'admin'
