@@ -1,5 +1,6 @@
 {
   "name": "KitaBuddy",
-  "description": "Your friendly AI learning companion for stories, chat, and discovery.",
-  "requestFramePermissions": []
+  "description": "Your friendly anti-bully learning & support companion for stories, chat, and discovery.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

@@ -18,6 +18,14 @@ import {
   increment,
   getDoc
 } from 'firebase/firestore';
+import {
+  getAuth,
+  GoogleAuthProvider,
+  signInWithPopup,
+  signOut as fbSignOut,
+  onAuthStateChanged,
+  User as FirebaseUser
+} from 'firebase/auth';
 import { ChatMessage } from '../types';
 
 // Firebase Configuration for safe-aistd
@@ -34,6 +42,98 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
+
+// Initialize Firebase Authentication
+export const auth = getAuth(app);
+export const googleProvider = new GoogleAuthProvider();
+googleProvider.setCustomParameters({
+  prompt: 'select_account'
+});
+
+export interface GoogleAuthResult {
+  id: string;
+  name: string;
+  role: string;
+  email: string;
+  photoURL?: string;
+  uid: string;
+}
+
+/**
+ * Log masuk menggunakan Google Sign-In pop-up
+ */
+export const signInWithGoogle = async (): Promise<GoogleAuthResult> => {
+  try {
+    const result = await signInWithPopup(auth, googleProvider);
+    const user = result.user;
+    const email = user.email || '';
+    const name = user.displayName || email.split('@')[0] || 'Pengguna Google';
+    const photoURL = user.photoURL || undefined;
+
+    let role = 'student';
+    // Semak jika pengguna ialah admin rasmi
+    if (
+      email.toLowerCase() === 'm-10531068@moe-dl.edu.my' ||
+      email.toLowerCase().includes('admin')
+    ) {
+      role = 'admin';
+    } else {
+      // Semak peranan sedia ada di Firestore jika ada
+      try {
+        const usersRef = collection(db, 'users');
+        const q = query(usersRef, where('studentId', '==', email));
+        const snapshot = await getDocs(q);
+        if (!snapshot.empty) {
+          const docData = snapshot.docs[0].data();
+          role = (docData.role || 'student').toLowerCase();
+        } else {
+          // Rekod pengguna baharu ke Firestore
+          await setDoc(doc(db, 'users', user.uid), {
+            studentId: email,
+            name: name,
+            role: role,
+            photoURL: photoURL || '',
+            provider: 'google',
+            createdAt: serverTimestamp(),
+            lastLogin: serverTimestamp()
+          }, { merge: true });
+        }
+      } catch (err) {
+        console.warn('Tidak dapat menyelaraskan profil pengguna ke Firestore:', err);
+      }
+    }
+
+    return {
+      id: email || user.uid,
+      name: name,
+      role: role,
+      email: email,
+      photoURL: photoURL,
+      uid: user.uid
+    };
+  } catch (error: any) {
+    console.error('Ralat Log Masuk Google:', error);
+    throw error;
+  }
+};
+
+/**
+ * Log keluar pengguna daripada Firebase Auth
+ */
+export const logoutFirebase = async () => {
+  try {
+    await fbSignOut(auth);
+  } catch (error) {
+    console.error('Ralat log keluar Firebase:', error);
+  }
+};
+
+/**
+ * Dengar perubahan status pengesahan Firebase
+ */
+export const onAuthStatusChanged = (callback: (user: FirebaseUser | null) => void) => {
+  return onAuthStateChanged(auth, callback);
+};
 
 export const loginUser = async (studentId: string, password: string) => {
   try {
